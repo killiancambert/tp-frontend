@@ -1,33 +1,17 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './Components/App';
-import * as serviceWorker from './serviceWorker';
-import Register from './Components/Register';
-import Login from './Components/Login';
-
-ReactDOM.render(
-  <React.StrictMode>
-    <Register />
-    <Login />
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
-
 (function () {
   // var SERVER = 'bosa3032.odns.fr';
   // var SERVER = 'localhost:1337';
   // var SERVER = 'app-96e160ad-34c6-4f60-a605-30805dbe4214.cleverapps.io/';
   var SERVER = 'backend.cleverapps.io';
   // var SERVER = window.location.host;
-  var PROTOCOL = window.location.protocol;
+  var PROTOCOL = location.protocol;
   var WS_PROTOCOL = PROTOCOL === 'https:' ? 'wss:' : 'ws:';
 
   var ws = new WebSocket(`${WS_PROTOCOL}//${SERVER}/`);
 
   var chatform = document.querySelector('.chatform');
   var loginform = document.querySelector('.loginform');
+  var registerform = document.querySelector('.registerform');
   document.querySelector('#chat').style.display = 'none';
 
   async function sendLogging(login, password) {
@@ -68,6 +52,27 @@ ReactDOM.render(
     }
   }
 
+  async function sendRegister(login, password, email) {
+    const response = await fetch(`${PROTOCOL}//${SERVER}/subscribe`, {
+      method: 'POST',
+      body: JSON.stringify({
+        "username": login,
+        "password": password,
+        "email": email,
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+    const registerResponseValue = await response.text();
+    if (!registerResponseValue.ok) {
+      document.querySelector('.error').textContent = registerResponseValue;
+    } else {
+      document.querySelector('.error').textContent = 'Le compte a été créé !';
+    }
+  }
+
   loginform.onsubmit = function (e) {
     e.preventDefault();
     var loginInput = loginform.querySelector('input[name=login]');
@@ -75,6 +80,14 @@ ReactDOM.render(
     var login = loginInput.value;
     var password = passwordInput.value;
     sendLogging(login, password);
+  }
+
+  registerform.onsubmit = function (e) {
+    e.preventDefault();
+    var loginInput = registerform.querySelector('input[name=login]');
+    var passwordInput = registerform.querySelector('input[name=password]');
+    var emailInput = registerform.querySelector('input[name=email]');
+    sendRegister(loginInput.value, passwordInput.value, emailInput.value);
   }
 
   chatform.onsubmit = function (e) {
@@ -98,8 +111,3 @@ ReactDOM.render(
   }
 
 }());
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
